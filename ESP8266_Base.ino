@@ -70,12 +70,12 @@ ESP8266WebServer server(80);
  */
 void handleRoot()
 {
-  server.send(200, "text/html", "<h1>You are connected</h1><br/><a href='wlanSetup'>Setup WLAN</a>");
+  server.send(200, "text/html", "<!doctype html><body><head></head><html><h1>You are connected</h1><br><a href=\"wlanSetup\">Setup WLAN</a></body></html>");
 }
 
 void handleWlanSetup()
 {
-  server.send(200, "text/html", "<h1>You are connected</h1><form method='POST' action='/wlanSetupConfirm'><a>SSID</a><input type='text' name='ssid' /><br /> <a>pwd</a><input type='text' name='password' /><br /> <input type='submit' value='Update' /></form>");
+  server.send(200, "text/html", "<!doctype html><body><head></head><html><h1>You are connected</h1><form method=\"POST\" action=\"/wlanSetupConfirm\"><label id=\"ssid\">SSID</label><input id=\"ssid\" name=\"ssid\"><br><label id=\"pwd\">pwd</label><input id=\"pwd\" name=\"password\"><br><input type=\"submit\" value=\"Update\"></form></body></html>");
 }
 
 void handlePwdPost()
@@ -89,7 +89,7 @@ void handlePwdPost()
   eepromContent.detectPattern = DETECT_MATCH_PATTERN;
   EEPROM_writeAnything(0, eepromContent);
   EEPROM.commit();
-  server.send(200, "text/html", "OK - Data stored to EEPROM.");
+  server.send(200, "text/html", "<!doctype html><body><head></head><html>OK - Data stored to EEPROM.</body></html>");
 }
 
 
@@ -98,7 +98,7 @@ void handlePostValue()
   String valStr = server.arg("value");
   Serial.print("new Value = " + valStr);
   curPwmOut = (uint16_t)valStr.toInt();
-  server.send(200, "text/html", "OK - Value Set to" + String(curPwmOut));
+  server.send(200, "application/json", "{\"status\":\"Value Set to" + String(curPwmOut) + "\",\"value\":"+curPwmOut+"}");
 }
 
 
@@ -257,8 +257,3 @@ void loop()
   delay(1);
 
 }
-
-
-
-
-
