@@ -48,7 +48,7 @@ ESP8266WebServer server(80);
  */
 void handleRoot()
 {
-  server.send(200, "text/html", "<!doctype html><body><head></head><html><h1>You are connected</h1><br><a href=\"wlanSetup\">Setup WLAN</a></body></html>");
+  server.send(200, "text/html", "<!doctype html><body><head></head><html><h1>You are connected</h1><br/><a href=\"wlanSetup\">Setup WLAN</a><br/><a>Value: " + String(curPwmOut) + "</a></body></html>");
 }
 
 void handleWlanSetup()
@@ -118,6 +118,7 @@ void setupWifiConnect()
     Serial.print(".");
     timeout++;
   }
+  Serial.println();
 
   if (WiFi.status() != WL_CONNECTED)
   {
@@ -125,12 +126,19 @@ void setupWifiConnect()
     startAp = true;
     switchSetup = true;
   }
+  else
+  {
+    Serial.print("connected. IP is: ");
+    Serial.println(WiFi.localIP());
+  }
 
   
-
-  if (MDNS.begin("OPENHAB_TESTLUDER")) 
+  String id_prefix = "OPENHAB_TESTLUDER_";
+  String id = id_prefix + ESP.getFlashChipId();
+  if (MDNS.begin(id.c_str())) 
   {
-    Serial.println("mDNS responder started");
+    Serial.print("mDNS responder started: ");
+    Serial.println(id);
     MDNS.addService("http", "tcp", 80);
   }
   else
