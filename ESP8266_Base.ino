@@ -1,51 +1,29 @@
-/*
- * Copyright (c) 2015, Majenko Technologies
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without modification,
- * are permitted provided that the following conditions are met:
- *
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- *
- * * Redistributions in binary form must reproduce the above copyright notice, this
- *   list of conditions and the following disclaimer in the documentation and/or
- *   other materials provided with the distribution.
- *
- * * Neither the name of Majenko Technologies nor the names of its
- *   contributors may be used to endorse or promote products derived from
- *   this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
- * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
- * ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
- * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
 
-/* Create a WiFi access point and provide a web server on it. */
 
 #include <ESP8266WiFi.h>
+#include <ESP8266mDNS.h>
 #include <WiFiClient.h>
 #include <ESP8266WebServer.h>
+#include <DNSServer.h>
 #include <EEPROM.h>
 #include "EPROMAnything.h"
 
 #define DETECT_MATCH_PATTERN ((uint16_t)0xAAF0u)
 #define WIFI_CONNECT_TIMEOUT_CNT ((uint16_t)50u)
 
+// DNS server
+const static uint8_t DNS_PORT = 53;
+static DNSServer DnsServer;
+
+
 static void readPinConfig(void);
 
-const int ledPin = BUILTIN_LED;
-const int buttonPin = 0;
-const int adcOutPin = 2;
+const uint8_t ledPin = BUILTIN_LED;
+const uint8_t buttonPin = 0;
+const uint8_t adcOutPin = 2;
 const char * ssidAP = "Cfg";
-const char * pwd = "AutomatischesZeitalter";
+//const char * pwd = "AutomatischesZeitalter";
+const char * pwd = "12341234";
 
 static bool currentBtnStat = false;
 static bool prevBtnStat = false;
@@ -110,6 +88,8 @@ void setupWifiApMode()
   IPAddress NMask(255, 255, 255, 0);
   WiFi.softAPConfig(Ip, Ip, NMask);
   WiFi.softAP(ssidAP, pwd);
+  DnsServer.setErrorReplyCode(DNSReplyCode::NoError);
+  DnsServer.start(DNS_PORT, "*", Ip);
 
   Serial.println("AP active");
   Serial.print("SSID: ");
@@ -117,7 +97,9 @@ void setupWifiApMode()
   Serial.print("PWD: ");
   Serial.println(pwd);
   Serial.print("visit website under: ");
-  Serial.println(Ip);
+  Serial.println(WiFi.softAPIP());
+
+  WiFi.printDiag(Serial);
 }
 
 void setupWifiConnect()
@@ -141,6 +123,20 @@ void setupWifiConnect()
     startAp = true;
     switchSetup = true;
   }
+
+  
+
+  if (MDNS.begin("OPENHAB_TESTLUDER")) 
+  {
+    Serial.println("mDNS responder started");
+  }
+  else
+  {
+    Serial.println("Error setting up MDNS responder!");
+  }
+
+  
+
 
   Serial.println("");
   Serial.println("WiFi connected");
@@ -213,7 +209,9 @@ void setup() {
   server.on("/wlanSetup", handleWlanSetup);
   server.on("/wlanSetupConfirm", HTTP_POST, handlePwdPost);
   server.on("/setValue", handlePostValue);
-  server.begin();
+
+  MDNS.addService("http", "tcp", 80);
+  
   Serial.println("HTTP server started");
   switchSetup = true;
 }
@@ -239,7 +237,7 @@ void loop()
 
     if (startAp)
     {
-      WiFi.disconnect();
+      WiFi.disconnect(true);
       setupWifiApMode();
     }
     else
@@ -247,6 +245,7 @@ void loop()
       WiFi.softAPdisconnect(true);
       setupWifiConnect();
     }
+    server.begin();
 
   }
   else
