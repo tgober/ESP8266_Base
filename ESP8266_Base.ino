@@ -88,6 +88,8 @@ void setupWifiApMode()
   IPAddress NMask(255, 255, 255, 0);
   WiFi.softAPConfig(Ip, Ip, NMask);
   WiFi.softAP(ssidAP, pwd);
+  delay(500); // Without delay I've seen the IP address blank
+  
   DnsServer.setErrorReplyCode(DNSReplyCode::NoError);
   DnsServer.start(DNS_PORT, "*", Ip);
 
@@ -129,6 +131,7 @@ void setupWifiConnect()
   if (MDNS.begin("OPENHAB_TESTLUDER")) 
   {
     Serial.println("mDNS responder started");
+    MDNS.addService("http", "tcp", 80);
   }
   else
   {
@@ -209,8 +212,6 @@ void setup() {
   server.on("/wlanSetup", handleWlanSetup);
   server.on("/wlanSetupConfirm", HTTP_POST, handlePwdPost);
   server.on("/setValue", handlePostValue);
-
-  MDNS.addService("http", "tcp", 80);
   
   Serial.println("HTTP server started");
   switchSetup = true;
@@ -219,7 +220,12 @@ void setup() {
 void loop()
 {
   readPinConfig();
+  if (startAp)
+  {
+    DnsServer.processNextRequest();
+  }
   server.handleClient();
+  
   analogWrite(adcOutPin, curPwmOut);
   if (prevBtnStat == true && currentBtnStat == false)
   {
@@ -234,15 +240,17 @@ void loop()
     switchSetup = false;
     Serial.println("ok. Change. What now ...");
 
-
+    WiFi.disconnect();
     if (startAp)
     {
-      WiFi.disconnect(true);
+      //WiFi.disconnect();
+      //WiFi.mode(WIFI_AP);
       setupWifiApMode();
     }
     else
     {
-      WiFi.softAPdisconnect(true);
+      //WiFi.softAPdisconnect(true);
+      //WiFi.mode(WIFI_STA);
       setupWifiConnect();
     }
     server.begin();
