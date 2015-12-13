@@ -18,12 +18,12 @@ static DNSServer DnsServer;
 
 static void readPinConfig(void);
 
-const uint8_t ledPin = BUILTIN_LED;
-const uint8_t buttonPin = 0;
-const uint8_t adcOutPin = 2;
-const char * ssidAP = "Cfg";
-//const char * pwd = "AutomatischesZeitalter";
-const char * pwd = "12341234";
+static const uint8_t ledPin = BUILTIN_LED;
+static const uint8_t buttonPin = 0;
+static const uint8_t adcOutPin = 2;
+static const char * ssidAP = "Cfg";
+//static const char * pwd = "AutomatischesZeitalter";
+static const char * pwd = "12341234";
 
 static bool currentBtnStat = false;
 static bool prevBtnStat = false;
@@ -31,57 +31,22 @@ static bool startAp = false;
 static bool switchSetup = false;
 static uint16_t curPwmOut = 0u;
 
-struct
+static struct
 {
   uint16_t detectPattern;
   char ssid[100];
   char password[100];
   uint16_t prevValue;
-
 } eepromContent;
 
 
+
+// Public variables
 ESP8266WebServer server(80);
 
-/* Just a little test message.  Go to http://192.168.4.1 in a web browser
- * connected to this access point to see it.
- */
-void handleRoot()
-{
-  server.send(200, "text/html", "<!doctype html><body><head></head><html><h1>You are connected</h1><br/><a href=\"wlanSetup\">Setup WLAN</a><br/><a>Value: " + String(curPwmOut) + "</a></body></html>");
-}
-
-void handleWlanSetup()
-{
-  server.send(200, "text/html", "<!doctype html><body><head></head><html><h1>You are connected</h1><form method=\"POST\" action=\"/wlanSetup\"><label id=\"ssid\">SSID</label><input id=\"ssid\" name=\"ssid\"><br><label id=\"pwd\">pwd</label><input id=\"pwd\" name=\"password\"><br><input type=\"submit\" value=\"Update\"></form></body></html>");
-}
-
-void handlePwdPost()
-{
-  String ssid = server.arg("ssid");
-  String password = server.arg("password");
-  Serial.print("ssid = '" + ssid + "'");
-  Serial.print("pwd = '" + password + "'");
-  strcpy( eepromContent.ssid, ssid.c_str());
-  strcpy( eepromContent.password, password.c_str());
-  eepromContent.detectPattern = DETECT_MATCH_PATTERN;
-  EEPROM_writeAnything(0, eepromContent);
-  EEPROM.commit();
-  server.send(200, "text/html", "<!doctype html><body><head></head><html>OK - Data stored to EEPROM.</body></html>");
-}
 
 
-void handlePostValue()
-{
-  String valStr = server.arg("value");
-  Serial.print("new Value = " + valStr);
-  curPwmOut = (uint16_t)valStr.toInt();
-  server.send(200, "application/json", "{\"status\":\"Value Set to" + String(curPwmOut) + "\",\"value\":"+curPwmOut+"}");
-}
-
-
-
-void setupWifiApMode()
+static void setupWifiApMode()
 {
   Serial.println("Switching to AP mode");
   IPAddress Ip(192, 168, 3, 1);
@@ -104,7 +69,7 @@ void setupWifiApMode()
   WiFi.printDiag(Serial);
 }
 
-void setupWifiConnect()
+static void setupWifiConnect()
 {
   uint16_t timeout = 0u;
   Serial.println("try to connect to");
@@ -146,14 +111,11 @@ void setupWifiConnect()
     Serial.println("Error setting up MDNS responder!");
   }
 
-  
-
-
   Serial.println("");
   Serial.println("WiFi connected");
 }
 
-void getEepromContent()
+static void getEepromContent()
 {
   EEPROM.begin(512);
   Serial.println();
@@ -216,10 +178,7 @@ void setup() {
 
   getEepromContent();
 
-  server.on("/", handleRoot);
-  server.on("/wlanSetup", HTTP_GET, handleWlanSetup);
-  server.on("/wlanSetup", HTTP_POST, handlePwdPost);
-  server.on("/setValue", handlePostValue);
+  registerUrl();
   
   Serial.println("HTTP server started");
   switchSetup = true;
@@ -246,19 +205,17 @@ void loop()
   if (switchSetup)
   {
     switchSetup = false;
-    Serial.println("ok. Change. What now ...");
+    Serial.print("ok. Change. Swtich to ");
 
     WiFi.disconnect();
     if (startAp)
     {
-      //WiFi.disconnect();
-      //WiFi.mode(WIFI_AP);
+      Serial.println("AP mode");
       setupWifiApMode();
     }
     else
     {
-      //WiFi.softAPdisconnect(true);
-      //WiFi.mode(WIFI_STA);
+      Serial.println("WiFi mode");
       setupWifiConnect();
     }
     server.begin();
