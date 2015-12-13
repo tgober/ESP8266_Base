@@ -1,4 +1,5 @@
 
+
 void registerUrl()
 {
   server.on("/", handleRoot);
@@ -27,11 +28,10 @@ void handlePwdPost()
   String password = server.arg("password");
   Serial.print("ssid = '" + ssid + "'");
   Serial.print("pwd = '" + password + "'");
-  strcpy( eepromContent.ssid, ssid.c_str());
-  strcpy( eepromContent.password, password.c_str());
-  eepromContent.detectPattern = DETECT_MATCH_PATTERN;
-  EEPROM_writeAnything(0, eepromContent);
-  EEPROM.commit();
+  PER_setSSID(ssid.c_str());
+  PER_setPassword(password.c_str());
+  PER_setPersistanceContentValid();
+  PER_saveContent();
   server.send(200, "text/html", "<!doctype html><body><head></head><html>OK - Data stored to EEPROM.</body></html>");
 }
 
@@ -41,6 +41,11 @@ void handlePostValue()
   String valStr = server.arg("value");
   Serial.print("new Value = " + valStr);
   curPwmOut = (uint16_t)valStr.toInt();
+  if(curPwmOut != PER_getPwm())
+  {
+    PER_setPwm(curPwmOut);
+    PER_saveContent();
+  }
   server.send(200, "application/json", "{\"status\":\"Value Set to" + String(curPwmOut) + "\",\"value\":"+curPwmOut+"}");
 }
 
