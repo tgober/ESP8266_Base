@@ -1,0 +1,80 @@
+FORMAT: 1A
+HOST: http://esp8266.local/
+
+# esh-esp8266
+
+ESP8266 firmware API for Eclipse Smart Home Binding. 
+See https://github.com/muesliman/ESP8266_Base for Details.
+
+## Status [/]
+
+### Get device status [GET]
+
++ Response 200 (text/html)
+
+        <!doctype html>
+        <body><head></head><html>
+        <h1>You are connected</h1>
+        <br/>
+        <a href="wlanSetup">Setup WLAN</a>
+        <br/>
+        <a>Value: 50</a>
+        </body></html>
+
+## Output [/setValue]
+
+### Set new output voltage [POST]
+
+Set new output voltage. This modifies the ESPs PWM.
+
++ Request (application/x-www-form-urlencoded)
+
+        123
+
++ Response 200 (application/json)
+
+    + Body
+
+            {
+                "status": "Value Set to 123",
+                "value":"123"
+            }
+
+
+## WiFi setup [/wlanSetup]
+
+### WiFi setup [GET]
+
+Show Wifi Setup form.
+
++ Response 200 (text/html)
+
+    + Body
+    
+            <!doctype html>
+            <body><head></head><html>
+            <h1>You are connected</h1>
+            <form method="POST" action="/wlanSetupConfirm">
+            <label id="ssid">SSID</label><input id="ssid" name="ssid">
+            <br>
+            <label id="pwd">pwd</label><input id="pwd" name="password">
+            <br>
+            <input type="submit" value="Update">
+            </form></body></html>
+
+
+### Set new WiFi credentials [POST]
+
+Set new SSID and password. After that, the ESP will reboot and try to connect. 
+If that does not work after X seconds, fall back to config Mode ad start Access Point with SSID *Cfg*.
+
++ Request (application/x-www-form-urlencoded)
+    
+        ssid=YOUR_SSID&pwd=YOUR_PWD
+
++ Response 200 (text/html)
+
+        <!doctype html>
+        <body><head></head><html>
+        OK - Data stored to EEPROM.
+        </body></html>
