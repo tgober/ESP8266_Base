@@ -1,13 +1,3 @@
-
-
-void registerUrl()
-{
-  server.on("/", handleRoot);
-  server.on("/wlanSetup", HTTP_GET, handleWlanSetup);
-  server.on("/wlanSetup", HTTP_POST, handlePwdPost);
-  server.on("/setValue", handlePostValue);
-}
-
 #include "ESP8266_Common.h"
 
 /* Just a little test message.  Go to http://192.168.4.1 in a web browser
@@ -48,5 +38,13 @@ void handlePostValue()
     PER_saveContent();
   }
   server.send(200, "application/json", "{\"status\":\"Value Set to" + String(curPwmOut) + "\",\"value\":"+curPwmOut+"}");
+}
+
+void registerUrl()
+{
+  server.on("/", handleRoot);
+  server.on("/wlanSetup", HTTP_GET, handleWlanSetup);
+  server.on("/wlanSetup", HTTP_POST, handlePwdPost);
+  server.on("/setValue", handlePostValue);
 }
 
