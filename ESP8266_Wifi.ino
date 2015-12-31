@@ -1,5 +1,5 @@
 #include <ESP8266mDNS.h>
-
+#include "ESP8266_Common.h"
 
 #define WIFI_CONNECT_TIMEOUT_CNT ((uint16_t)50u)
 

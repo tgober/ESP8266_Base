@@ -8,6 +8,7 @@ void registerUrl()
   server.on("/setValue", handlePostValue);
 }
 
+#include "ESP8266_Common.h"
 
 /* Just a little test message.  Go to http://192.168.4.1 in a web browser
  * connected to this access point to see it.

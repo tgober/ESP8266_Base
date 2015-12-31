@@ -1,3 +1,4 @@
+#include "ESP8266_Common.h"
 
 static uint8_t buttonIo = 0xFF;
 static uint8_t btnDownCnt = 0;
