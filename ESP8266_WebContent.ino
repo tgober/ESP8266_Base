@@ -13,18 +13,32 @@ void handleRoot()
 
 void handleWlanSetup()
 {
-  server.send(200, "text/html", HTML_PREFIX + "<h1>Edit WiFi credentials</h1>" +
-  "<form method=\"POST\" action=\"/wlanSetup\">" +
-  "<label for=\"ssid\">SSID</label>" +
-  "<br>" +
-  "<input id=\"ssid\" name=\"ssid\" required autofocus>" +
-  "<br>" +
-  "<label for=\"pwd\">pwd</label>" +
-  "<br>" +
-  "<input id=\"pwd\" name=\"password\" type=\"password\" required>" +
-  "<br>" +
-  "<input type=\"submit\" value=\"Update\">" +
-  "</form>" + HTML_SUFFIX);
+  int numSsid = scanWiFis();
+  String html = HTML_PREFIX + "<h1>Edit WiFi credentials</h1>" +
+                  "<form method=\"POST\" action=\"/wlanSetup\">" +
+                  "<label for=\"ssid\">SSID</label>" +
+                  "<br>" +
+                  "<select name=\"ssid\">";
+
+  // print the network number and name for each network found:
+    for (int thisNet = 0; thisNet < numSsid; thisNet++) {
+      html += "<option value=\"";
+      html += WiFi.SSID(thisNet);
+      html += "\">";
+      html += WiFi.SSID(thisNet);
+      html += "(";
+      html += WiFi.RSSI(thisNet);
+      html += " dBm)</option>";
+     }
+
+  html += "</select>";
+  html += "<br><label for=\"pwd\">pwd</label>";
+  html += "<br><input id=\"pwd\" name=\"password\" type=\"password\" required>";
+  html += "<br><input type=\"submit\" value=\"Update\">";
+  html += "</form>";
+  html += HTML_SUFFIX;
+
+  server.send(200, "text/html", html);
 }
 
 void handlePwdPost()

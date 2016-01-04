@@ -17,5 +17,6 @@ void PER_setPwm(uint16_t value);
 void registerUrl();
 void setupWifiApMode();
 void setupWifiConnect();
+int scanWiFis();
 
 #endif
