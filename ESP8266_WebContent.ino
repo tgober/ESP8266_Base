@@ -1,16 +1,30 @@
 #include "ESP8266_Common.h"
 
+String HTML_PREFIX = "<!doctype html><html><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"></head>";
+String HTML_SUFFIX = "</body></html>";
+
 /* Just a little test message.  Go to http://192.168.4.1 in a web browser
  * connected to this access point to see it.
  */
 void handleRoot()
 {
-  server.send(200, "text/html", "<!doctype html><body><head></head><html><h1>You are connected</h1><br/><a href=\"wlanSetup\">Setup WLAN</a><br/><a>Value: " + String(curPwmOut) + "</a></body></html>");
+  server.send(200, "text/html", HTML_PREFIX + "<h1>You are connected to ESP8266</h1><br><a href=\"wlanSetup\">Setup WLAN</a><br><a>Value: " + String(curPwmOut) + "</a>" + HTML_SUFFIX);
 }
 
 void handleWlanSetup()
 {
-  server.send(200, "text/html", "<!doctype html><body><head></head><html><h1>You are connected</h1><form method=\"POST\" action=\"/wlanSetup\"><label id=\"ssid\">SSID</label><input id=\"ssid\" name=\"ssid\"><br><label id=\"pwd\">pwd</label><input id=\"pwd\" name=\"password\"><br><input type=\"submit\" value=\"Update\"></form></body></html>");
+  server.send(200, "text/html", HTML_PREFIX + "<h1>Edit WiFi credentials</h1>" +
+  "<form method=\"POST\" action=\"/wlanSetup\">" +
+  "<label for=\"ssid\">SSID</label>" +
+  "<br>" +
+  "<input id=\"ssid\" name=\"ssid\" required autofocus>" +
+  "<br>" +
+  "<label for=\"pwd\">pwd</label>" +
+  "<br>" +
+  "<input id=\"pwd\" name=\"password\" type=\"password\" required>" +
+  "<br>" +
+  "<input type=\"submit\" value=\"Update\">" +
+  "</form>" + HTML_SUFFIX);
 }
 
 void handlePwdPost()
@@ -23,7 +37,7 @@ void handlePwdPost()
   PER_setPassword(password.c_str());
   PER_setPersistanceContentValid();
   PER_saveContent();
-  server.send(200, "text/html", "<!doctype html><body><head></head><html>OK - Data stored to EEPROM.</body></html>");
+  server.send(200, "text/html", HTML_PREFIX + "OK - Data stored to EEPROM." + HTML_SUFFIX);
 }
 
 
