@@ -1,5 +1,5 @@
 #include <ESP8266mDNS.h>
-
+#include "ESP8266_Common.h"
 
 #define WIFI_CONNECT_TIMEOUT_CNT ((uint16_t)50u)
 
@@ -74,4 +74,17 @@ void setupWifiConnect()
   Serial.println("WiFi connected");
 }
 
+int scanWiFis()
+{
+  int numSsid = WiFi.scanNetworks();
+  if (numSsid == -1) {
+    Serial.println("Couldn't scan for wifis");
+  }
+
+  // print the list of networks seen:
+  Serial.print("number of available networks:");
+  Serial.println(numSsid);
+
+  return numSsid;
+}
 

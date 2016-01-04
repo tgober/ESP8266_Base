@@ -1,0 +1,33 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+</head>
+<body>
+<h1>You are connected</h1>
+<br>
+<a href="wlanSetup">Setup WLAN</a>
+<br>
+<a>Value: " + String(curPwmOut) + "</a>
+
+<hr>
+
+<h1>Edit WiFi credentials</h1><form method="POST" action="/wlanSetup">
+    <label for="ssid">SSID</label>
+    <br>
+    <input id="ssid" name="ssid" required autofocus>
+    <br>
+    <label for="pwd">Password</label>
+    <br>
+    <input id="pwd" name="password" type="password" required>
+    <br>
+    <input type="submit" value="Update">
+    </form>
+</body>
+
+<hr>
+
+OK - Data stored to EEPROM.
+
+</html>

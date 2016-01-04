@@ -2,7 +2,7 @@
 #include <WiFiClient.h>
 #include <ESP8266WebServer.h>
 #include <DNSServer.h>
-
+#include "ESP8266_Common.h"
 
 // DNS server
 const static uint8_t DNS_PORT = 53;

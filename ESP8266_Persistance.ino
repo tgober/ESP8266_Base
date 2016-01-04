@@ -1,6 +1,6 @@
 #include <EEPROM.h>
 #include "EPROMAnything.h"
-
+#include "ESP8266_Common.h"
 
 #define DETECT_MATCH_PATTERN ((uint16_t)0xAAF0u)
 
