@@ -1,78 +1,73 @@
 #include "ESP8266_Common.h"
 
-String HTML_PREFIX = "<!doctype html><html><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"></head>";
-String HTML_SUFFIX = "</body></html>";
+const char HTML_PREFIX[] PROGMEM = "<!doctype html><html><head><style type='text/css'>body{font:sans-serif;}</style><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"></head>";
+const char HTML_SUFFIX[] PROGMEM = "</body></html>";
 
 /* Just a little test message.  Go to http://192.168.4.1 in a web browser
  * connected to this access point to see it.
  */
 void handleRoot()
 {
-  server.send(200, "text/html", HTML_PREFIX + "<h1>You are connected to ESP8266</h1><br><a href=\"wlanSetup\">Setup WLAN</a><br><a>Value: " + String(curPwmOut) + "</a>" + HTML_SUFFIX);
+  String response;
+  response += FPSTR(HTML_PREFIX);
+  response += "<h1>You are connected to " + String(mdns_name) + "</h1><br>";
+  response += "<a>Value: " + String(curPwmOut) + "</a>";
+  response += FPSTR(HTML_SUFFIX);
+  server.send(200, "text/html",  response);
 }
 
-void handleWlanSetup()
+void sendStatus()
 {
-  int numSsid = scanWiFis();
-  String html = HTML_PREFIX + "<h1>Edit WiFi credentials</h1>" +
-                  "<form method=\"POST\" action=\"/wlanSetup\">" +
-                  "<label for=\"ssid\">SSID</label>" +
-                  "<br>" +
-                  "<select name=\"ssid\">";
-
-  // print the network number and name for each network found:
-    for (int thisNet = 0; thisNet < numSsid; thisNet++) {
-      html += "<option value=\"";
-      html += WiFi.SSID(thisNet);
-      html += "\">";
-      html += WiFi.SSID(thisNet);
-      html += "(";
-      html += WiFi.RSSI(thisNet);
-      html += " dBm)</option>";
-     }
-
-  html += "</select>";
-  html += "<br><label for=\"pwd\">pwd</label>";
-  html += "<br><input id=\"pwd\" name=\"password\" type=\"password\" required>";
-  html += "<br><input type=\"submit\" value=\"Update\">";
-  html += "</form>";
-  html += HTML_SUFFIX;
-
-  server.send(200, "text/html", html);
+  String json = "{";
+  json += "\"value\":" + String(curPwmOut) + ",";
+  json += "\"min\":0,\"max\":" + String(PWMRANGE) + ",";
+  json += "\"wifi\":{";
+  json +=   "\"ssid\":\"" + WiFi.SSID() + "\",";
+  json +=   "\"rssi\":" + String(WiFi.RSSI()) +",";
+  json +=   "\"mac\":\"" + WiFi.macAddress() + "\"";
+  json += "}}";
+      
+  server.send(200, "application/json", json);
 }
 
-void handlePwdPost()
-{
-  String ssid = server.arg("ssid");
-  String password = server.arg("password");
-  Serial.print("ssid = '" + ssid + "'");
-  Serial.print("pwd = '" + password + "'");
-  PER_setSSID(ssid.c_str());
-  PER_setPassword(password.c_str());
-  PER_setPersistanceContentValid();
-  PER_saveContent();
-  server.send(200, "text/html", HTML_PREFIX + "OK - Data stored to EEPROM." + HTML_SUFFIX);
-}
-
-
-void handlePostValue()
+void setNewValue()
 {
   String valStr = server.arg("value");
   Serial.print("new Value = " + valStr);
-  curPwmOut = (uint16_t)valStr.toInt();
+  uint16_t newPwmOut = (uint16_t)valStr.toInt();
+  if (newPwmOut != curPwmOut)
+  {
+    if (newPwmOut >= PWMRANGE)
+    {
+      server.send(400, "application/json", "{\"message\":\"Value too big\",\"value\":"+String(newPwmOut)+"}");
+      return;
+    }
+    curPwmOut = newPwmOut;
+  }
+  
   if(curPwmOut != PER_getPwm())
   {
     PER_setPwm(curPwmOut);
     PER_saveContent();
   }
-  server.send(200, "application/json", "{\"status\":\"Value Set to" + String(curPwmOut) + "\",\"value\":"+curPwmOut+"}");
+  
+  server.send(200, "application/json", "{\"message\":\"Value set\",\"value\":"+String(curPwmOut)+"}");
 }
 
-void registerUrl()
+void handleStatus() 
+{
+  if (server.method() == HTTP_POST) {
+    setNewValue();
+  } else {
+    sendStatus();
+  }
+}
+
+
+void registerUrls()
 {
   server.on("/", handleRoot);
-  server.on("/wlanSetup", HTTP_GET, handleWlanSetup);
-  server.on("/wlanSetup", HTTP_POST, handlePwdPost);
-  server.on("/setValue", handlePostValue);
+  server.on("/status", handleStatus);
+  server.onNotFound(handleRoot);
 }
 

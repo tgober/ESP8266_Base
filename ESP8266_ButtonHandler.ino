@@ -16,6 +16,7 @@ void BTH_Step(void)
 {
   if(buttonIo == 0xFF)
   {
+    // Uninitialized, call BTH_Init first!
     return;
   }
   

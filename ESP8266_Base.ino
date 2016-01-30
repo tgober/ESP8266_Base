@@ -1,13 +1,7 @@
 #include <ESP8266WiFi.h>
-#include <WiFiClient.h>
 #include <ESP8266WebServer.h>
-#include <DNSServer.h>
+#include <WiFiClient.h>
 #include "ESP8266_Common.h"
-
-// DNS server
-const static uint8_t DNS_PORT = 53;
-static DNSServer DnsServer;
-
 
 static const uint8_t ledPin = BUILTIN_LED;
 static const uint8_t buttonPin = 0;
@@ -16,24 +10,20 @@ static const char * ssidAP = "Cfg";
 //static const char * pwd = "AutomatischesZeitalter";
 static const char * pwd = "12341234";
 
+char mdns_name[40] = "ESP8266";
+
 static bool prevBtnStat = false;
 static bool startAp = false;
-static bool switchSetup = false;
 static uint16_t curPwmOut = 0u;
 
-
-
 // Public variables
-ESP8266WebServer server(80);
-
-
+ESP8266WebServer server(81);
 
 void setup() 
 {
   BTH_Init(buttonPin);
   pinMode(ledPin, OUTPUT);
   pinMode(adcOutPin, OUTPUT);
-  
 
   delay(1000);
   Serial.begin(115200);
@@ -45,65 +35,43 @@ void setup()
   {
     curPwmOut = PER_getPwm();
     startAp = false;
-    Serial.println("Reading EEPROM done");
+    Serial.println("Reading EEPROM done, values found, not starting Cfg-AP");
   }
   else
   {
     curPwmOut = 0;
     startAp = true;
-    Serial.println("Reading EEPROM done but uninitialized");
+    Serial.println("Reading EEPROM done but uninitialized, starting Cfg-AP");
   }
-  
-  registerUrl();
-  server.begin();
 
-  Serial.println("HTTP server started");
-  switchSetup = true;
+  // Connect to WiFi, start Config-AP if not successful.
+  // After timeout, ESP is reset to retry to connect
+  setupWifiConnect(startAp);
+  
+  delay(200);
+  
+  startMDNS();
+  registerUrls();
+  server.begin();  
 }
 
 void loop()
 {
   BTH_Step();
-  if (startAp)
-  {
-    DnsServer.processNextRequest();
-  }
   server.handleClient();
 
   analogWrite(adcOutPin, curPwmOut);
+  
   bool btnStat = GetBtnStat();
   if (prevBtnStat == true && btnStat == false)
   {
-    switchSetup = true;
-    startAp = !startAp;
+    startAp = true;
+    digitalWrite(ledPin, HIGH);
+    setupWifiConnect(true);
+    startAp = false;
   }
   prevBtnStat = btnStat;
 
-
-  if (switchSetup)
-  {
-    switchSetup = false;
-    Serial.print("ok. Change. Swtich to ");
-
-    WiFi.disconnect();
-    if (startAp)
-    {
-      Serial.println("AP mode");
-      setupWifiApMode();
-    }
-    else
-    {
-      Serial.println("WiFi mode");
-      setupWifiConnect();
-    }
-
-
-  }
-  else
-  {
-    digitalWrite(ledPin, LOW);
-  }
-
+  digitalWrite(ledPin, LOW);
   delay(1);
-
 }
